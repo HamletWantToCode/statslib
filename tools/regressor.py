@@ -1,0 +1,70 @@
+# SVR implementation
+
+import numpy as np 
+from main.baseSVM import baseSVM
+
+class EpsilonInsensitiveLossSVR(baseSVM):
+    def __init__(self, kernel, epsilon, Lambda, optimizer):
+        super().__init__(kernel, Lambda, optimizer)
+        self.epsilon_ = epsilon
+
+    def lossFunction(self, X, y, KM):
+        m = X.shape[0]
+        def function(alpha):
+            lossValue = 0
+            for i in range(m):
+                z = y[i] - (KM[i] @ alpha)
+                if abs(z) > self.epsilon_:
+                    lossValue += abs(z) - self.epsilon_
+            return (1.0/m)*lossValue + 0.5*self.Lambda_*(alpha @ (KM @ alpha))
+        return function
+
+    def lossDerivative(self, X, y, KM):
+        m = X.shape[0]
+        def function(alpha):
+            lossDeriv = np.zeros(m)
+            for i in range(m):
+                for j in range(m):
+                    z = y[j] - (KM[j] @ alpha)
+                    if z < -self.epsilon_:
+                        subgradient = -1
+                    elif abs(z) <= self.epsilon_:
+                        subgradient = 0
+                    else:
+                        subgradient = 1
+                    lossDeriv[i] += -KM[j, i]*subgradient
+            return (1.0/m)*lossDeriv + self.Lambda_*(KM @ alpha)
+        return function
+
+    def predict(self, X):
+        return self.decisionFunction(X)
+
+if __name__ == '__main__':
+    import pickle
+    from sklearn.kernel_ridge import KernelRidge
+    # from sklearn.preprocessing import StandardScaler
+    from main.default_kernels import *
+    from main.metric import *
+    from main.default_optimizers import *
+
+    fname = '../toydataset/boston_data'
+    with open(fname, 'rb') as f:
+        bostonData = pickle.load(f)
+
+    trainfeature, traintarget = bostonData[:300, :-1], bostonData[:300, -1]
+    testfeature, testtarget = bostonData[300:, :-1], bostonData[300:, -1]
+    # stdScaler = StandardScaler()
+    # newtrainfeature = stdScaler.fit_transform(trainfeature)
+
+    optimizer = GradientDescent(0.1, 1e-3, 1000)
+    bostonModel = EpsilonInsensitiveLossSVR(rbfKernel, 5, 1e-2, optimizer)
+    bostonModel.fit(trainfeature, traintarget)
+    predictValue = bostonModel.predict(testfeature)
+    precision = regressAccuracy(predictValue, testtarget)
+
+    bostonModelKRR = KernelRidge(1e-2, kernel='rbf', gamma=0.01)
+    bostonModelKRR.fit(trainfeature, traintarget)
+    predictValueKRR = bostonModelKRR.predict(testfeature)
+    precisionKRR = regressAccuracy(predictValueKRR, testtarget)
+
+    print(precision, precisionKRR)
