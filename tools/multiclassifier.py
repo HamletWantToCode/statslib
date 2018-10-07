@@ -53,8 +53,8 @@ if __name__ == '__main__':
     decomposedTrainFeature = (Vt[:2] @ trainFeature.T).T
     decomposedTestFeature = (Vt[:2] @ testFeature.T).T
 
-    kernel = rbfKernel(0.07)
-    optimizer = NAGMethod(0.1, 0.95, 1e-3, 10000)
+    kernel = rbfKernel(0.01)
+    optimizer = NAGMethod(0.1, 0.95, 1e-3, 1000)
     estimator = hingeLossSVC(kernel, 1e-3, optimizer)
     model = OnevsRest(estimator)
     model.fit(decomposedTrainFeature, trainTarget)
