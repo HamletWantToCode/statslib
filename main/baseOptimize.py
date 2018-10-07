@@ -1,4 +1,5 @@
 # base optimizer 
+# batch gradient descent method
 
 class baseOptimizer(object):
     def __init__(self, learning_rate, stopError, maxiters):

@@ -1,7 +1,29 @@
 # SVR implementation
+# with L2 norm
 
 import numpy as np 
 from main.baseSVM import baseSVM
+
+class SquareLossSVR(baseSVM):
+    def __init__(self, kernel, Lambda):
+        super().__init__(kernel, Lambda, None)
+
+    def fit(self, X, y):
+        self.support_vectors_ = X
+        m = X.shape[0]
+        KM = self.kernelMatrix()
+        A = KM + self.Lambda_*m*np.eye(m)
+        U, S, Vh = np.linalg.svd(A)
+        rank = len(S[S>1e-8])
+        coefficients = np.divide((U.T[:rank] @ y), S[:rank])
+        alpha = np.zeros(m)
+        for j, cj in enumerate(coefficients):
+            alpha += cj*Vh[j]
+        self.coef_ = alpha
+        return self
+
+    def predict(self, X):
+        return self.decisionFunction(X)
 
 class EpsilonInsensitiveLossSVR(baseSVM):
     def __init__(self, kernel, epsilon, Lambda, optimizer):
@@ -57,12 +79,12 @@ if __name__ == '__main__':
     # newtrainfeature = stdScaler.fit_transform(trainfeature)
 
     optimizer = GradientDescent(0.1, 1e-3, 1000)
-    bostonModel = EpsilonInsensitiveLossSVR(rbfKernel, 5, 1e-2, optimizer)
+    bostonModel = SquareLossSVR(linearKernel, 1e-3)
     bostonModel.fit(trainfeature, traintarget)
     predictValue = bostonModel.predict(testfeature)
     precision = regressAccuracy(predictValue, testtarget)
 
-    bostonModelKRR = KernelRidge(1e-2, kernel='rbf', gamma=0.01)
+    bostonModelKRR = KernelRidge(1e-3, kernel='linear')
     bostonModelKRR.fit(trainfeature, traintarget)
     predictValueKRR = bostonModelKRR.predict(testfeature)
     precisionKRR = regressAccuracy(predictValueKRR, testtarget)
