@@ -3,6 +3,7 @@
 
 import numpy as np
 from statslib.main.baseSVM import baseSVM
+from statslib.main.default_linearEquationSolver import RileyGolub_solver, svd_solver
 
 class SquareLossSVR(baseSVM):
     def __init__(self, kernel, Lambda):
@@ -13,14 +14,11 @@ class SquareLossSVR(baseSVM):
         m = X.shape[0]
         KM = self.kernelMatrix()
         A = KM + self.Lambda_*m*np.eye(m)
-        U, S, Vh = np.linalg.svd(A)
-        if cond is None:
-            cond = np.finfo(np.float64).eps
-        rank = len(S[S>cond])
-        coefficients = np.divide((U.T[:rank] @ y), S[:rank])
-        alpha = np.zeros(m)
-        for j, cj in enumerate(coefficients):
-            alpha += cj*Vh[j]
+        self.cond_ = np.linalg.cond(A)
+        if self.cond_ < 1e3:
+            alpha = svd_solver(A, y, cond)
+        else:
+            alpha = RileyGolub_solver(A, y)
         self.coef_ = alpha
         return self
 
