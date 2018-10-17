@@ -1,20 +1,22 @@
 # SVR implementation
 # with L2 norm
 
-import numpy as np 
-from main.baseSVM import baseSVM
+import numpy as np
+from statslib.main.baseSVM import baseSVM
 
 class SquareLossSVR(baseSVM):
     def __init__(self, kernel, Lambda):
         super().__init__(kernel, Lambda, None)
 
-    def fit(self, X, y):
+    def fit(self, X, y, cond=None):
         self.support_vectors_ = X
         m = X.shape[0]
         KM = self.kernelMatrix()
         A = KM + self.Lambda_*m*np.eye(m)
         U, S, Vh = np.linalg.svd(A)
-        rank = len(S[S>1e-8])
+        if cond is None:
+            cond = np.finfo(np.float64).eps
+        rank = len(S[S>cond])
         coefficients = np.divide((U.T[:rank] @ y), S[:rank])
         alpha = np.zeros(m)
         for j, cj in enumerate(coefficients):

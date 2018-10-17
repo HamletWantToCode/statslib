@@ -1,8 +1,8 @@
 # SVC implementation
 # with L2 norm
 
-import numpy as np 
-from main.baseSVM import baseSVM
+import numpy as np
+from statslib.main.baseSVM import baseSVM
 
 class hingeLossSVC(baseSVM):
     def lossFunction(self, X, y, KM):
@@ -61,4 +61,4 @@ if __name__ == '__main__':
     # b_predictlabelsSVC = binary_modelSVC.predict(b_testfeatures)
     # modelPrecision_SVC = classifyAccuracy(b_predictlabelsSVC, b_testtargets)
 
-    # print(modelPrecision, modelPrecision_SVC)    
+    # print(modelPrecision, modelPrecision_SVC)
