@@ -4,34 +4,9 @@
 import numpy as np
 from statslib.main.baseSVM import baseSVM
 
-class hingeLossSVC(baseSVM):
-    def lossFunction(self, X, y, KM):
-        m = X.shape[0]
-        def hingeLoss(alpha):
-            lossValue = 0
-            for i in range(m):
-                lossValue += max([0, 1 - y[i]*(KM[i] @ alpha)])
-            return (1.0/m)*lossValue + 0.5*self.Lambda_*(alpha @ (KM @ alpha))
-        return hingeLoss
 
-    def lossDerivative(self, X, y, KM):
-        m = X.shape[0]
-        def hingeLossDerivative(alpha):
-            lossDerivativeValue = np.zeros(m)
-            for i in range(m):
-                for j in range(m):
-                    subgradient = 1 if y[j]*(KM[j] @ alpha) <= 1 else 0
-                    lossDerivativeValue[i] += -y[j]*KM[i, j]*subgradient
-            return (1.0/m)*lossDerivativeValue + self.Lambda_*(KM @ alpha)
-        return hingeLossDerivative
 
-    def predict(self, X):
-        n = X.shape[0]
-        distance = self.decisionFunction(X)
-        predictLabels = np.zeros(n)
-        for i in range(n):
-            predictLabels[i] = 1 if distance[i]>0 else -1
-        return predictLabels
+
 
 if __name__ == '__main__':
     import pickle

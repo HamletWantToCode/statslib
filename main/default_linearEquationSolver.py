@@ -3,26 +3,16 @@
 import numpy as np 
 
 # direct method
-def svd_solver(A, b, cond=None):
-    U, S, Vh = np.linalg.svd(A)
-    if cond is None:
-        cond = np.finfo(np.float64).eps
-    rank = len(S[S>cond])
-    coefficients = np.divide((U.T[:rank] @ b), S[:rank])
-    x = np.zeros(A.shape[1])
-    for j, cj in enumerate(coefficients):
-        x += cj*Vh[j]
-    return x
 
-def cholesky_solver(A, y):
+def cholesky_solver(A, b):
     n = A.shape[1]
     L = np.linalg.cholesky(A)
-    b = np.zeros(n)
+    y = np.zeros(n)
     x = np.zeros(n)
     for i in range(n):
-        b[i] = (y[i] - (L[i] @ b)) / L[i, i]
+        y[i] = (b[i] - (L[i] @ y)) / L[i, i]
     for j in range(n, 0, -1):
-        x[j-1] = (b[j-1] - (L[:, j-1] @ x)) / L[j-1, j-1]
+        x[j-1] = (y[j-1] - (L[:, j-1] @ x)) / L[j-1, j-1]
     return x 
 
 # iteration method
@@ -61,7 +51,7 @@ def RileyGolub_solver(K, y, alpha=None, r0=None, err=1e-5):
         r0 = lamda_min*10**(0.5*abs(np.log10(lamda_min)) + 1)
     A = K + r0*np.eye(m)
     k = 1
-    Err0 = np.inf
+    # Err0 = np.inf
     while True:
         y_ = y + r0*alpha
         alpha_ = cholesky_solver(A, y_)
@@ -71,11 +61,11 @@ def RileyGolub_solver(K, y, alpha=None, r0=None, err=1e-5):
             print('Converged after %s iterations, the error is %.7f' %(k, Err))
             alpha = alpha_
             break
-        if Err / Err0 > 0.75:
-            r0 = r0 / 2.0
-        elif Err / Err0 < 0.25:
-            r0 *= 2.0 
-        alpha, Err0 = alpha_, Err
+        # if Err / Err0 > 0.75:
+        #     r0 = r0 / 2.0
+        # elif Err / Err0 < 0.25:
+        #     r0 *= 2.0 
+        alpha = alpha_
         k += 1
     return alpha
 
@@ -87,6 +77,17 @@ if __name__ == '__main__':
     X_precise = np.ones(20)
     y = H20 @ X_precise
 
-    X_optim = RileyGolub_solver(H20, y)
-    diff = X_optim - X_precise
+    X_svd = svd_solver(H20, y, cond=1e-10)
+    diff = X_svd - X_precise
+    # X_optim = RileyGolub_solver(H20, y)
+    # diff = X_optim - X_precise
     print(np.sqrt(diff @ diff))
+
+    # A = np.array([[4, 12, -16], [12, 37, -43], [-16, -43, 98]])
+    # x = np.ones(3)
+    # b = A @ x
+    
+    # X_svd = svd_solver(A, b)
+    # X_RG = RileyGolub_solver(A, b, r0=0.8)
+    # diff = X_RG - X_svd
+    # print(np.sqrt(diff @ diff))

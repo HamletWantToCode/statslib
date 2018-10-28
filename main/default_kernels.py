@@ -7,6 +7,11 @@ def rbfKernel(gamma):
         return np.exp(-gamma*np.sum((x - y)**2))
     return function
 
+def laplaceKernel(gamma):
+    def function(x, y):
+        return np.exp(-gamma*np.sqrt(np.sum((x - y)**2)))
+    return function
+
 def polyKernel(gamma, r0, p):
     def function(x, y):
         return (r0 + gamma*(x @ y))**p

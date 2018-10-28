@@ -1,12 +1,17 @@
 # optimizer instance
 
 import numpy as np 
-from main.baseOptimize import baseOptimizer
+from .baseOptimize import baseOptimizer
 
 class GradientDescent(baseOptimizer):
-    def optimizer(self, alpha0, derivative):
-        alpha = alpha0 - self.lr_*derivative(alpha0)
+    def optimizer(self, alpha0, derivative, X, y):
+        alpha = alpha0 - self.lr_*derivative(alpha0, X, y)
         return alpha 
+
+# class ConjugateGradientsDescent(baseOptimizer):
+#     def optimizer(self, alpha0, gradient, X, y):
+
+
 
 class NAGMethod(baseOptimizer):
     def __init__(self, learning_rate, momentum_param, stopError, maxiters):
