@@ -1,7 +1,7 @@
 import pickle
 import numpy as np 
-from statslib.main.utils import linearKernel, meanSquareError
-from statslib.tools.kernel_ridge import KernelRidge
+from statslib.tools.utils import linearKernel, meanSquareError
+from statslib.main.kernel_ridge import KernelRidge
 import matplotlib.pyplot as plt  
 
 fname = '/Users/hongbinren/Documents/program/statslib/toydataset/boston_data'

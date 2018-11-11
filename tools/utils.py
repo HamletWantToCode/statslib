@@ -22,18 +22,30 @@ def regularizer_gradient(KM):
         return KM @ alpha
     return function
 
+# math
+def euclidean_distance(X, Y):
+    XX = np.sum(X*X, axis=1)[:, np.newaxis]
+    YY = np.sum(Y*Y, axis=1)[np.newaxis, :]
+    distance = XX + YY - 2*(X @ Y.T)
+    return np.sqrt(distance)
+
+def svd_solver(A, b, cond=None):
+    U, S, Vh = np.linalg.svd(A)
+    if cond is None:
+        cond = np.finfo(np.float64).eps
+    rank = len(S[S>cond])
+    coefficients = np.divide((U.T[:rank] @ b), S[:rank])
+    x = np.zeros(A.shape[1])
+    for j, cj in enumerate(coefficients):
+        x += cj*Vh[j]
+    return x
+
 # kernel
 def check_array(X, Y):
     if Y is None:
         Y = X
     assert X.shape[1] == Y.shape[1], print('the 2nd dimension of X, Y not match !')
     return X, Y
-
-def euclidean_distance(X, Y):
-    XX = np.sum(X*X, axis=1)[:, np.newaxis]
-    YY = np.sum(Y*Y, axis=1)[np.newaxis, :]
-    distance = XX + YY - 2*(X @ Y.T)
-    return np.sqrt(distance)
 
 def linearKernel(X, Y=None):
     X, Y = check_array(X, Y)
@@ -72,5 +84,5 @@ def classifyAccuracy(ypred, ytest):
 def meanSquareError(ypred, ytest):
     n = len(ytest)
     assert len(ypred) == n
-    mse = np.sqrt(np.sum((ypred - ytest)**2)) / n
+    mse = np.sum((ypred - ytest)**2) / n
     return mse

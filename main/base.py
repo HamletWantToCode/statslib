@@ -4,7 +4,7 @@ import numpy as np
 from ..tools.utils import load_data, regularizer, regularizer_gradient
 
 # kernel machine 
-class baseKernelMachine(object):
+class BaseKernelMachine(object):
     def __init__(self, kernel, Lambda, optimizer):
         self.kernel = kernel
         self.Lambda_ = Lambda
@@ -31,7 +31,7 @@ class baseKernelMachine(object):
         kernel_vector = self.kernel(X, self.X_fit_)
         return kernel_vector @ self.coef_
 
-class baseClassifier(baseKernelMachine):
+class BaseClassifier(BaseKernelMachine):
     def predict(self, X):
         n = X.shape[0]
         distance = self.decisionFunction(X)
@@ -40,12 +40,12 @@ class baseClassifier(baseKernelMachine):
             predictLabels[i] = 1 if distance[i]>0 else -1
         return predictLabels
 
-class baseRegressor(baseKernelMachine):
+class BaseRegresso(BaseKernelMachine):
     def predict(self, X):
         return self.decisionFunction(X)
 
 # optimization
-class baseOptimize(object):
+class BaseOptimize(object):
     def __init__(self, learning_rate, stopError, maxiters, n_batch=1):
         self.lr_ = learning_rate
         self.stopError_ = stopError
