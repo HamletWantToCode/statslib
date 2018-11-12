@@ -6,7 +6,5 @@
 **/out
 *.sh
 *.pbs
-dataset/
 **/old/
-function_fitting_demo/
-**/test/
+**/test_examples/
