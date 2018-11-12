@@ -11,6 +11,32 @@ def load_data(data, n_batch=1):
         feature, target = partition[:, :-1], partition[:, -1]
         yield (feature, target)
 
+# data standardize
+# class Standardizer(object):
+#     def _mean(self, data):
+#         mean_ = np.mean(data, axis=0)
+#         self.mean_ = mean_
+#         return mean_
+    
+#     def _var(self, data):
+#         nsample = data.shape[0]
+#         cov_mat = data.T @ data
+#         var_ = np.sqrt(np.diag(cov_mat) / nsample)
+#         self.var_ = var_
+#         return var_
+    
+#     def fit_transform(self, data):
+#         mean = self._mean(data)
+#         var = self._var(data)
+#         data -= mean
+#         data /= var
+#         return data
+    
+#     def transform(self, data):
+#         data -= self.mean_
+#         data /= self.var_
+#         return data
+
 # Tikhonov regularize
 def regularizer(KM):
     def function(alpha):
@@ -19,7 +45,7 @@ def regularizer(KM):
 
 def regularizer_gradient(KM):
     def function(alpha):
-        return KM @ alpha
+        return 2*(KM @ alpha)
     return function
 
 # math
@@ -27,6 +53,9 @@ def euclidean_distance(X, Y):
     XX = np.sum(X*X, axis=1)[:, np.newaxis]
     YY = np.sum(Y*Y, axis=1)[np.newaxis, :]
     distance = XX + YY - 2*(X @ Y.T)
+    n = distance.shape[0]
+    for i in range(n):
+        distance[i, i] = 0      # the diagonal entry may small than zero due to numerical error
     return np.sqrt(distance)
 
 def svd_solver(A, b, cond=None):

@@ -17,11 +17,12 @@ normal_testX = test_X - mean
 # normal_trainX = scaler.fit_transform(train_X)
 # normal_testX = scaler.transform(test_X)
 
-from statslib.main.optimization import GradientDescent
+from statslib.main.optimization import * 
 from statslib.main.svm import hingeLossSVC
 from statslib.tools.utils import linearKernel
-lambda_ = 1e-4
-optimizer = GradientDescent(1e-7, 1e-3, 500, n_batch=200)
+lambda_ = 0
+optimizer = GradientDescent(1e-8, 1e-3, 500, n_batch=200)
+# optimizer = NesterovGD(1e-8, 1e-3, 500, 0.2, n_batch=200)
 model = hingeLossSVC(linearKernel, lambda_, optimizer)
 model.fit(normal_trainX, train_y)
 predict_y = model.predict(normal_testX)

@@ -52,13 +52,13 @@ class EpsilonInsensitiveLossSVR(BaseRegressor):
         Z = sub_y - (sub_KM @ alpha)
         lossDeriv = np.zeros(n_coef)
         for i in range(n_samples):
-            if Z[i] < -self.epsilon_:
-                subgradient = -1
-            elif Z[i] > self.epsilon_:
+            if Z[i] <= -self.epsilon_:
                 subgradient = 1
+            elif Z[i] > self.epsilon_:
+                subgradient = -1
             else:
                 subgradient = 0
-            lossDeriv += -1*subgradient*sub_KM[i]
+            lossDeriv += subgradient*sub_KM[i]
         regular_term_grad = self.regular_grad(alpha)
-        return (1.0/n_samples)*lossDeriv + self.Lambda_*regular_term_grad
+        return (1.0/n_samples)*lossDeriv + 0.5*self.Lambda_*regular_term_grad
 

@@ -22,7 +22,8 @@ class BaseKernelMachine(object):
         full_KM = self.kernel(X)
         self.regular_func = regularizer(full_KM)
         self.regular_grad = regularizer_gradient(full_KM)
-        alpha0 = np.zeros(n_sample)
+        # alpha0 = np.zeros(n_sample)
+        alpha0 = np.random.uniform(-1, 1, n_sample)*1e-2
         alpha = self.optimizer.run(alpha0, self.lossFunction, self.lossGradient, full_KM, y)
         self.coef_ = alpha
         return self
@@ -40,7 +41,7 @@ class BaseClassifier(BaseKernelMachine):
             predictLabels[i] = 1 if distance[i]>0 else -1
         return predictLabels
 
-class BaseRegresso(BaseKernelMachine):
+class BaseRegressor(BaseKernelMachine):
     def predict(self, X):
         return self.decisionFunction(X)
 
