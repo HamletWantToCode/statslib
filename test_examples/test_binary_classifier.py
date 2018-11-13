@@ -21,7 +21,7 @@ from statslib.main.optimization import *
 from statslib.main.svm import hingeLossSVC
 from statslib.tools.utils import linearKernel
 lambda_ = 0
-optimizer = GradientDescent(1e-8, 1e-3, 500, n_batch=200)
+optimizer = GradientDescent(1e-8, 1e-3, 10, n_batch=200, verbose=1)
 # optimizer = NesterovGD(1e-8, 1e-3, 500, 0.2, n_batch=200)
 model = hingeLossSVC(linearKernel, lambda_, optimizer)
 model.fit(normal_trainX, train_y)

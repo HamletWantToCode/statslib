@@ -47,30 +47,32 @@ class BaseRegressor(BaseKernelMachine):
 
 # optimization
 class BaseOptimize(object):
-    def __init__(self, learning_rate, stopError, maxiters, n_batch=1):
+    def __init__(self, learning_rate, stopError, maxiters, n_batch=1, verbose=0):
         self.lr_ = learning_rate
         self.stopError_ = stopError
         self.maxiters_ = maxiters
         self.nb_ = n_batch
+        self.verbose_ = verbose
+        if verbose:
+            self.fvals_ = []
 
     def run(self, alpha, function, gradient, full_KM, y):
         data = np.c_[full_KM, y]
         f0 = function(alpha, full_KM, y)
-        n_epoch = 1
-        converge = 0
+        n_epoch = 0
         while True:
             loader = load_data(data, self.nb_)
             for i, (sub_KM, sub_y) in enumerate(loader):
                 alpha = self.optimizer(alpha, gradient, sub_KM, sub_y)
-                f_update = function(alpha, full_KM, y)
-                ferr = abs(f_update-f0)
-                if ferr < self.stopError_:
-                    converge = 1
-                    print('optimization converges after %d epoches and %d batch iterations!' %(n_epoch, i+1))
-                    break
-                f0 = f_update
-            if converge:
+                if self.verbose_:
+                    f_update = function(alpha, full_KM, y)
+                    self.fvals_.append(f_update)
+            f1 = function(alpha, full_KM, y)
+            ferr = abs(f1-f0)
+            if ferr < self.stopError_:
+                print('optimization converges after %d epoches and %d batch iterations!' %(n_epoch, i+1))
                 break
+            f0 = f1
             if n_epoch > self.maxiters_:
                 raise StopIteration('loop exceeds the maximum iterations !')
             n_epoch += 1
