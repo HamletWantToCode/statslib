@@ -18,25 +18,46 @@ def load_data(data, n_batch=1):
 #         self.mean_ = mean_
 #         return mean_
     
-#     def _var(self, data):
-#         nsample = data.shape[0]
-#         cov_mat = data.T @ data
+#     def _var(self, center_data):
+#         """
+#         NOTE: this 'variance' is different from the
+#         variance in math book, I don't divide the sample
+#         number. I want to make the singular value of 
+#         transformed data to be 1, this will make optimization
+#         process easier
+#         """
+#         nsample = center_data.shape[0]
+#         cov_mat = center_data.T @ center_data
 #         var_ = np.sqrt(np.diag(cov_mat) / nsample)
 #         self.var_ = var_
 #         return var_
     
 #     def fit_transform(self, data):
 #         mean = self._mean(data)
-#         var = self._var(data)
-#         data -= mean
-#         data /= var
-#         return data
+#         center_data = data - mean
+#         var = self._var(center_data)
+#         normal_data = center_data / var
+#         return normal_data
     
 #     def transform(self, data):
-#         data -= self.mean_
-#         data /= self.var_
-#         return data
+#         center_data = data - self.mean_
+#         normal_data = data / self.var_
+#         return normal_data
 
+# PCA transformation (for real matrix)
+class PCA_transform(object):
+    def __init__(self, n_components):
+        self.ncmp_ = n_components
+
+    def fit_transform(self, data):
+        cov_mat = data.T @ data
+        U, S, _ = np.linalg.svd(cov_mat)
+        self.trans_mat = U[:, :self.ncmp_]
+        return data @ U[:, :self.ncmp_]
+
+    def transform(self, data):
+        return data @ self.trans_mat
+    
 # Tikhonov regularize
 def regularizer(KM):
     def function(alpha):
