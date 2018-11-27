@@ -17,12 +17,12 @@ class BaseKernelMachine(object):
         raise NotImplementedError('MUST implement loss gradient before using fit !')
     
     def fit(self, X, y):
+        assert (X.ndim==2) & (y.ndim==2), print('reshape array into 2 dimension !')
         n_sample = X.shape[0]
         self.X_fit_ = X
         full_KM = self.kernel(X)
         self.regular_func = regularizer(full_KM)
         self.regular_grad = regularizer_gradient(full_KM)
-        # alpha0 = np.zeros(n_sample)
         alpha0 = np.random.uniform(-1, 1, n_sample)*1e-2
         alpha = self.optimizer.run(alpha0, self.lossFunction, self.lossGradient, full_KM, y)
         self.coef_ = alpha
@@ -36,9 +36,7 @@ class BaseClassifier(BaseKernelMachine):
     def predict(self, X):
         n = X.shape[0]
         distance = self.decisionFunction(X)
-        predictLabels = np.zeros(n)
-        for i in range(n):
-            predictLabels[i] = 1 if distance[i]>0 else -1
+        predictLabels = np.where(distance>0, 1, -1)
         return predictLabels
 
 class BaseRegressor(BaseKernelMachine):
@@ -57,11 +55,10 @@ class BaseOptimize(object):
             self.fvals_ = []
 
     def run(self, alpha, function, gradient, full_KM, y):
-        data = np.c_[full_KM, y]
         f0 = function(alpha, full_KM, y)
         n_epoch = 0
         while True:
-            loader = load_data(data, self.nb_)
+            loader = load_data(full_KM, y, self.nb_)
             for i, (sub_KM, sub_y) in enumerate(loader):
                 alpha = self.optimizer(alpha, gradient, sub_KM, sub_y)
                 if self.verbose_:

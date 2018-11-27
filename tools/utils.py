@@ -3,12 +3,11 @@
 import numpy as np 
 
 # dataset
-def load_data(data, n_batch=1):
-    N = data.shape[0]
+def load_data(X, y, n_batch=1):
+    N = X.shape[0]
     n_elements = N//n_batch
     for i in range(n_batch):
-        partition = data[i*n_elements : (i+1)*n_elements]
-        feature, target = partition[:, :-1], partition[:, -1]
+        feature, target = X[i*n_elements : (i+1)*n_elements], y[i*n_elements : (i+1)*n_elements]
         yield (feature, target)
 
 # data standardize
@@ -74,20 +73,23 @@ def euclidean_distance(X, Y):
     XX = np.sum(X*X, axis=1)[:, np.newaxis]
     YY = np.sum(Y*Y, axis=1)[np.newaxis, :]
     distance = XX + YY - 2*(X @ Y.T)
-    n = distance.shape[0]
-    for i in range(n):
-        distance[i, i] = 0      # the diagonal entry may small than zero due to numerical error
+    np.maximum(distance, 0, out=distance)      # the diagonal entry may small than zero due to numerical error
     return np.sqrt(distance)
 
+def manhattan_distance(X, Y):
+    X_ = X[:, np.newaxis, :]
+    Y_ = Y[np.newaxis, :, :]
+    M = X_ - Y_
+    np.sum(abs(M), axis=2, out=M)
+    return M
+
 def svd_solver(A, b, cond=None):
-    U, S, Vh = np.linalg.svd(A)
+    U, S, _ = np.linalg.svd(A)
     if cond is None:
         cond = np.finfo(np.float64).eps
     rank = len(S[S>cond])
-    coefficients = np.divide((U.T[:rank] @ b), S[:rank])
-    x = np.zeros(A.shape[1])
-    for j, cj in enumerate(coefficients):
-        x += cj*Vh[j]
+    coefficients = np.squeeze(U.T[:rank] @ b) / S[:rank]
+    x = np.sum(coefficients[np.newaxis, :] * U[:, :rank], axis=1)
     return x
 
 # kernel
@@ -111,7 +113,7 @@ def rbfKernel(gamma):
 def laplaceKernel(gamma):
     def ll_function(X, Y=None):
         X, Y = check_array(X, Y)
-        distance = euclidean_distance(X, Y)    
+        distance = manhattan_distance(X, Y)    
         return np.exp(-gamma*distance)
     return ll_function
 

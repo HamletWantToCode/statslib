@@ -9,8 +9,8 @@ with open(fname, 'rb') as f:
 np.random.shuffle(data)
 
 # scaler = StandardScaler()
-train_X, train_y = data[:200, :-1], data[:200, -1]
-test_X, test_y = data[-300:, :-1], data[-300:, -1]
+train_X, train_y = data[:200, :-1], data[:200, -1][:, np.newaxis]
+test_X, test_y = data[-300:, :-1], data[-300:, -1][:, np.newaxis]
 mean = np.mean(train_X, axis=0)
 normal_trainX = train_X - mean
 normal_testX = test_X - mean
@@ -21,7 +21,7 @@ from statslib.main.optimization import *
 from statslib.main.svm import hingeLossSVC
 from statslib.tools.utils import linearKernel
 lambda_ = 0
-optimizer = GradientDescent(1e-8, 1e-3, 10, n_batch=200, verbose=1)
+optimizer = GradientDescent(1e-8, 1e-3, 1000, n_batch=200, verbose=1)
 # optimizer = NesterovGD(1e-8, 1e-3, 500, 0.2, n_batch=200)
 model = hingeLossSVC(linearKernel, lambda_, optimizer)
 model.fit(normal_trainX, train_y)

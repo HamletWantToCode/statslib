@@ -9,6 +9,7 @@ class KernelRidge(BaseRegressor):
         super().__init__(kernel, Lambda, None)
 
     def fit(self, X, y, cond=1e-8):
+        assert (X.ndim==2) & (y.ndim==2), print('reshape array into 2 dimension !')
         n_samples = X.shape[0]
         self.X_fit_ = X
         KM = self.kernel(X)

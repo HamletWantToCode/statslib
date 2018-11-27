@@ -9,8 +9,8 @@ with open(fname, 'rb') as f:
     data = pickle.load(f)
 np.random.shuffle(data)
 scaler = StandardScaler()
-train_X, train_y = data[:200, :-1], data[:200, -1]
-test_X, test_y = data[-300:, :-1], data[-300:, -1]
+train_X, train_y = data[:200, :-1], data[:200, -1][:, np.newaxis]
+test_X, test_y = data[-300:, :-1], data[-300:, -1][:, np.newaxis]
 mean_y = np.mean(train_y)
 centered_trainy = train_y - mean_y
 normal_trainX = scaler.fit_transform(train_X)
