@@ -79,10 +79,11 @@ def euclidean_distance(X, Y):
 def manhattan_distance(X, Y):
     X_ = X[:, np.newaxis, :]
     Y_ = Y[np.newaxis, :, :]
-    M = X_ - Y_
-    np.sum(abs(M), axis=2, out=M)
+    M_ = X_ - Y_
+    M = np.sum(abs(M_), axis=2)
     return M
 
+## used for real symmetric matrix 
 def svd_solver(A, b, cond=None):
     U, S, _ = np.linalg.svd(A)
     if cond is None:
