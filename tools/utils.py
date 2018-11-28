@@ -70,17 +70,19 @@ def regularizer_gradient(KM):
 
 # math
 def euclidean_distance(X, Y):
-    XX = np.sum(X*X, axis=1)[:, np.newaxis]
-    YY = np.sum(Y*Y, axis=1)[np.newaxis, :]
-    distance = XX + YY - 2*(X @ Y.T)
-    np.maximum(distance, 0, out=distance)      # the diagonal entry may small than zero due to numerical error
+    # special care about complex entry
+    X_ = X[:, np.newaxis, :]
+    Y_ = Y[np.newaxis, :, :]
+    D_ = X_ - Y_
+    distance = np.sum(D_*D_.conj(), axis=2, dtype=np.float)
     return np.sqrt(distance)
 
 def manhattan_distance(X, Y):
+    # special care about complex entry
     X_ = X[:, np.newaxis, :]
     Y_ = Y[np.newaxis, :, :]
-    M_ = X_ - Y_
-    M = np.sum(abs(M_), axis=2)
+    D_ = X_ - Y_
+    M = np.sum(np.sqrt(D_*D_.conj()), axis=2, dtype=np.float64)
     return M
 
 ## used for real symmetric matrix 
