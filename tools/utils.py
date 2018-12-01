@@ -1,6 +1,6 @@
 # miscellanious utility
 
-import numpy as np 
+import numpy as np
 
 # dataset
 def load_data(X, y, n_batch=1):
@@ -16,12 +16,12 @@ def load_data(X, y, n_batch=1):
 #         mean_ = np.mean(data, axis=0)
 #         self.mean_ = mean_
 #         return mean_
-    
+
 #     def _var(self, center_data):
 #         """
 #         NOTE: this 'variance' is different from the
 #         variance in math book, I don't divide the sample
-#         number. I want to make the singular value of 
+#         number. I want to make the singular value of
 #         transformed data to be 1, this will make optimization
 #         process easier
 #         """
@@ -30,14 +30,14 @@ def load_data(X, y, n_batch=1):
 #         var_ = np.sqrt(np.diag(cov_mat) / nsample)
 #         self.var_ = var_
 #         return var_
-    
+
 #     def fit_transform(self, data):
 #         mean = self._mean(data)
 #         center_data = data - mean
 #         var = self._var(center_data)
 #         normal_data = center_data / var
 #         return normal_data
-    
+
 #     def transform(self, data):
 #         center_data = data - self.mean_
 #         normal_data = data / self.var_
@@ -56,7 +56,7 @@ class PCA_transform(object):
 
     def transform(self, data):
         return data @ self.trans_mat
-    
+
 # Tikhonov regularize
 def regularizer(KM):
     def function(alpha):
@@ -74,7 +74,7 @@ def euclidean_distance(X, Y):
     X_ = X[:, np.newaxis, :]
     Y_ = Y[np.newaxis, :, :]
     D_ = X_ - Y_
-    distance = np.sum(D_*D_.conj(), axis=2, dtype=np.float)
+    distance = np.sum(D_*D_.conj(), axis=2, dtype=np.float64)
     return np.sqrt(distance)
 
 def manhattan_distance(X, Y):
@@ -85,7 +85,7 @@ def manhattan_distance(X, Y):
     M = np.sum(np.sqrt(D_*D_.conj()), axis=2, dtype=np.float64)
     return M
 
-## used for real symmetric matrix 
+## used for real symmetric matrix
 def svd_solver(A, b, cond=None):
     U, S, _ = np.linalg.svd(A)
     if cond is None:
@@ -104,7 +104,7 @@ def check_array(X, Y):
 
 def linearKernel(X, Y=None):
     X, Y = check_array(X, Y)
-    return X @ Y.T
+    return X @ (Y.conj()).T
 
 def rbfKernel(gamma):
     def rbf_function(X, Y=None):
@@ -113,17 +113,39 @@ def rbfKernel(gamma):
         return np.exp(-gamma*square_distance)
     return rbf_function
 
+def rbfKernel_gd(gamma):
+    def rbf_gd(X, Y=None):
+        X, Y = check_array(X, Y)
+        square_distance = (euclidean_distance(X, Y))**2
+        K = np.exp(-gamma*square_distance)
+        diff = X[:, np.newaxis, :] - Y
+        gd = -2*gamma*diff*K[:, :, np.newaxis]
+        return np.transpose(gd, axes=(0, 2, 1))
+    return rbf_gd
+
 def laplaceKernel(gamma):
     def ll_function(X, Y=None):
         X, Y = check_array(X, Y)
-        distance = manhattan_distance(X, Y)    
+        distance = manhattan_distance(X, Y)
         return np.exp(-gamma*distance)
     return ll_function
+
+def laplaceKernel_gd(gamma):
+    def ll_gd(X, Y=None):
+        X, Y = check_array(X, Y)
+        distance = manhattan_distance(X, Y)
+        K = np.exp(-gamma*distance)
+        diff = X[:, np.newaxis, :] - Y
+        mod_diff = np.sqrt(diff*diff.conj()).real
+        np.maximum(1e-15, mod_diff, out=mod_diff)
+        gd = -gamma*(diff/mod_diff)*K[:, :, np.newaxis]
+        return np.transpose(gd, axes=(0, 2, 1))
+    return ll_gd
 
 def polyKernel(gamma, r0, d):
     def poly_function(X, Y=None):
         X, Y = check_array(X, Y)
-        return (r0 + gamma*(X @ Y.T))**d
+        return (r0 + gamma*(X @ (Y.conj()).T))**d
     return poly_function
 
 # metric

@@ -26,7 +26,7 @@ def numerical_check(x, f, df, h, *args):
     return Err
 
 np.random.seed(5)
-fname = 'test_examples/sample_data'
+fname = 'test_examples/classification_sample_data'
 with open(fname, 'rb') as f:
     data = pickle.load(f)
 np.random.shuffle(data)
