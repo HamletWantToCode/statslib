@@ -10,38 +10,15 @@ def load_data(X, y, n_batch=1):
         feature, target = X[i*n_elements : (i+1)*n_elements], y[i*n_elements : (i+1)*n_elements]
         yield (feature, target)
 
-# data standardize
-# class Standardizer(object):
-#     def _mean(self, data):
-#         mean_ = np.mean(data, axis=0)
-#         self.mean_ = mean_
-#         return mean_
-
-#     def _var(self, center_data):
-#         """
-#         NOTE: this 'variance' is different from the
-#         variance in math book, I don't divide the sample
-#         number. I want to make the singular value of
-#         transformed data to be 1, this will make optimization
-#         process easier
-#         """
-#         nsample = center_data.shape[0]
-#         cov_mat = center_data.T @ center_data
-#         var_ = np.sqrt(np.diag(cov_mat) / nsample)
-#         self.var_ = var_
-#         return var_
-
-#     def fit_transform(self, data):
-#         mean = self._mean(data)
-#         center_data = data - mean
-#         var = self._var(center_data)
-#         normal_data = center_data / var
-#         return normal_data
-
-#     def transform(self, data):
-#         center_data = data - self.mean_
-#         normal_data = data / self.var_
-#         return normal_data
+# data-split
+def n_split(nsplits, Num, random_state):
+    np.random.seed(random_state)
+    index = np.arange(0, Num, 1, dtype=int)
+    np.random.shuffle(index)
+    for i in range(nsplits):
+        part1 = index[i:Num:nsplits]
+        part2 = np.setdiff1d(index, part1)
+        yield part1, part2
 
 # PCA transformation (for real matrix)
 class PCA_transform(object):
@@ -150,8 +127,7 @@ def polyKernel(gamma, r0, d):
 
 # metric
 def classifyAccuracy(ypred, ytest):
-    n = len(ytest)
-    assert len(ypred) == n
+    assert ypred.ndim == ytest.ndim
     accuracy = 0
     for i, label in enumerate(ypred):
         if label == ytest[i]:
@@ -159,7 +135,6 @@ def classifyAccuracy(ypred, ytest):
     return accuracy*1.0 / n
 
 def meanSquareError(ypred, ytest):
-    n = len(ytest)
-    assert len(ypred) == n
-    mse = np.sum((ypred - ytest)**2) / n
-    return mse
+    assert ypred.ndim == ytest.ndim
+    mse = np.mean((ypred - ytest)**2)
+    return np.sqrt(mse)

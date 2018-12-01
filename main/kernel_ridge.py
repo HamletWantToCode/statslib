@@ -13,7 +13,7 @@ class KernelRidge(BaseRegressor):
         n_samples = X.shape[0]
         self.X_fit_ = X
         KM = self.kernel(X)
-        A = KM + self.Lambda_*n_samples*np.eye(n_samples)
+        A = KM + self.Lambda_*np.eye(n_samples)
         self.cond_ = np.linalg.cond(A)
         alpha = svd_solver(A, y, cond)
         self.coef_ = alpha
