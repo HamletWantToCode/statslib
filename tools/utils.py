@@ -20,6 +20,9 @@ def n_split(nsplits, Num, random_state):
         part2 = np.setdiff1d(index, part1)
         yield part1, part2
 
+def stratified_split(nsplits, Num, labels, random_state):
+    pass
+
 # PCA transformation (for real matrix)
 class PCA_transform(object):
     def __init__(self, n_components):
@@ -138,3 +141,13 @@ def meanSquareError(ypred, ytest):
     assert ypred.ndim == ytest.ndim
     mse = np.mean((ypred - ytest)**2)
     return np.sqrt(mse)
+
+def mean_abs_error(ypred, ytest):
+    assert ypred.ndim == ytest.ndim
+    err = np.mean(abs(ypred - ytest))
+    return err
+
+def max_abs_error(ypred, ytest):
+    assert ypred.ndim == ytest.ndim
+    err = np.amax(abs(ypred - ytest))
+    return err
