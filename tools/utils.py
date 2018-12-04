@@ -100,8 +100,24 @@ def rbfKernel_gd(gamma):
         K = np.exp(-gamma*square_distance)
         diff = X[:, np.newaxis, :] - Y
         gd = -2*gamma*diff*K[:, :, np.newaxis]
-        return np.transpose(gd, axes=(0, 2, 1))
+        return gd
     return rbf_gd
+
+def rbfKernel_hess(gamma):
+    def rbf_hess(X, Y=None):
+        X, Y = check_array(X, Y)
+        N, D = X.shape
+        square_distance = (euclidean_distance(X, Y))**2
+        K = np.exp(-gamma*square_distance)
+        diff = X[:, np.newaxis, :] - Y
+        hess = np.zeros((N*D, N*D), np.complex64)
+        E = np.eye(D)
+        for i in range(N):
+            for j in range(N):
+                diff_ij = diff[i, j]
+                hess[i*D:(i+1)*D, j*D:(j+1)*D] = 2*gamma*K[i, j]*(E - 2*gamma*diff_ij[np.newaxis, :]*diff_ij[:, np.newaxis])
+        return hess
+    return rbf_hess
 
 def laplaceKernel(gamma):
     def ll_function(X, Y=None):
