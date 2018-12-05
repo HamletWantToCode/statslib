@@ -96,27 +96,30 @@ def rbfKernel(gamma):
 def rbfKernel_gd(gamma):
     def rbf_gd(X, Y=None):
         X, Y = check_array(X, Y)
+        (N1, D), N = X.shape, Y.shape[0]
         square_distance = (euclidean_distance(X, Y))**2
         K = np.exp(-gamma*square_distance)
-        diff = X[:, np.newaxis, :] - Y
-        gd = -2*gamma*diff*K[:, :, np.newaxis]
-        return gd
+        diff = X[:, :, np.newaxis] - Y.T 
+        K_gd = -2*gamma*diff*K[:, np.newaxis, :]
+        return K_gd.reshape((N1*D, N))
     return rbf_gd
 
 def rbfKernel_hess(gamma):
     def rbf_hess(X, Y=None):
         X, Y = check_array(X, Y)
-        N, D = X.shape
+        (N1, D), N = X.shape, Y.shape[0]
         square_distance = (euclidean_distance(X, Y))**2
         K = np.exp(-gamma*square_distance)
-        diff = X[:, np.newaxis, :] - Y
-        hess = np.zeros((N*D, N*D), np.complex64)
-        E = np.eye(D)
-        for i in range(N):
-            for j in range(N):
-                diff_ij = diff[i, j]
-                hess[i*D:(i+1)*D, j*D:(j+1)*D] = 2*gamma*K[i, j]*(E - 2*gamma*diff_ij[np.newaxis, :]*diff_ij[:, np.newaxis])
-        return hess
+        K_hess = np.zeros((N1*D, N*D), dtype=np.complex64)
+        E = np.eye(D, dtype=np.complex64)
+        for i in range(0, N1*D, D):
+            m = i//D
+            for j in range(0, N*D, D):
+                n = j//D
+                diff = X[m] - Y[n] 
+                K_hess[i:i+D, j:j+D] = (E - 2*gamma*diff[:, np.newaxis]*diff[np.newaxis, :])*K[m, n]
+        K_hess *= 2*gamma
+        return K_hess
     return rbf_hess
 
 def laplaceKernel(gamma):
