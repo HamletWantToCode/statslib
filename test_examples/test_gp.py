@@ -1,33 +1,60 @@
-# test gauss process regression
+# test general covariance
 
 import numpy as np 
 from statslib.main.gauss_process import Gauss_Process_Regressor
-from statslib.tools.utils import rbfKernel
-import matplotlib.pyplot as plt 
-
-def f(x):
-    return np.sin(3*x)
-
-train_X = np.arange(0.5*np.pi, 2*np.pi, 0.5*np.pi)
-train_y = f(train_X)
+from statslib.tools.utils import rbfKernel, rbfKernel_gd, rbfKernel_hess
 
 gamma = 1
-kernel = rbfKernel(gamma)
-sigma = 0.01
-gp = Gauss_Process_Regressor(kernel, sigma)
-gp.fit(train_X[:, np.newaxis], train_y[:, np.newaxis])
 
-X = np.linspace(0, 2*np.pi, 50)
+# def kernel(x, y=None):
+#     if y is None:
+#         y = x
+#     dx = x - y.T
+#     return np.exp(-gamma*dx**2)
+
+# def kernel_gd(x, y=None):
+#     if y is None:
+#         y = x
+#     dx = x - y.T
+#     return -2*gamma*dx*np.exp(-gamma*dx**2)
+    
+# def kernel_hess(x, y=None):
+#     if y is None:
+#         y = x
+#     dx = x - y.T
+#     return 2*gamma*(1-2*gamma*dx**2)*np.exp(-gamma*dx**2) 
+
+def f(x):
+    return x*np.sin(x)
+
+def df(x):
+    return np.sin(x) + x*np.cos(x)
+
+X = np.arange(0.25*np.pi, 2*np.pi, 0.5*np.pi)
 y = f(X)
-predict_y, predict_error = gp.predict(X[:, np.newaxis])
+dy = df(X)
+y_ = np.r_[y, dy]
 
-plt.plot(X, y, 'r')
-plt.plot(train_X, train_y, 'ko')
-plt.plot(X, predict_y, 'b', alpha=0.5)
-plt.plot(X, predict_y-predict_error, 'b--', alpha=0.5)
-plt.plot(X, predict_y+predict_error, 'b--', alpha=0.5)
+kernel = rbfKernel(gamma)
+kernel_gd = rbfKernel_gd(gamma)
+kernel_hess = rbfKernel_hess(gamma)
+
+gp = Gauss_Process_Regressor(kernel, 1e-5, kernel_gd, kernel_hess)
+gp.fit(X[:, np.newaxis], y_[:, np.newaxis])
+
+Xt = np.linspace(0, 2*np.pi, 50)
+yt = f(Xt)
+y_pred, y_error = gp.predict(Xt[:, np.newaxis])
+# dK = kernel_gd(Xt[:, np.newaxis], X[:, np.newaxis])
+# predict_dy = dK @ gp.coef_
+# ddK = kernel(X[:, np.newaxis]) 
+# ddK_predict = kernel_hess(Xt[:, np.newaxis], Xt[:, np.newaxis])
+# ddK_corr = kernel_gd(Xt[:, np.newaxis], X[:, np.newaxis])
+# predict_dy_error = np.diag(ddK_predict - ddK_corr @ np.linalg.pinv(ddK) @ ddK_corr.T)
+
+import matplotlib.pyplot as plt 
+plt.plot(X, y, 'ko')
+plt.plot(Xt, yt, 'r')
+plt.plot(Xt, y_pred, 'b', alpha=0.5)
+plt.fill_between(Xt, y_pred-y_error, y_pred+y_error, color='b', alpha=0.5)
 plt.show()
-
-
-
-
