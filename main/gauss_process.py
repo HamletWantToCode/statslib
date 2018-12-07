@@ -43,10 +43,11 @@ def cov_setup(X, func, dfunc=None, ddfunc=None):
         return K
 
 def kstar_setup(X, Y, func, dfunc=None):
+    (N1, D), N = X.shape, Y.shape[0]
     Kstar = func(X, Y)
     if dfunc is not None:
-        Kstar_gd = dfunc(X, Y)
-        Gstar = np.c_[Kstar, -Kstar_gd]
+        Kstar_gd = dfunc(Y, X).T
+        Gstar = np.c_[Kstar, Kstar_gd]
         return Gstar
     else:
         return Kstar
