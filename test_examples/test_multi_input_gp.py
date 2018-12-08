@@ -10,23 +10,33 @@ kernel_gd = rbfKernel_gd(gamma)
 kernel_hess = rbfKernel_hess(gamma)
 
 def f(x):
-    return np.sin(x[0])*np.cos(x[1])
+    return (1-x[0])**2 + 100*(x[1]-x[0]**2)**2
 
 def df(x):
-    return np.array([np.cos(x[0])*np.cos(x[1]), -np.sin(x[0])*np.sin(x[1])])
+    return np.array([-2*(1-x[0])-400*(x[1]-x[0]**2)*x[0], 200*(x[1]-x[0]**2)])
 
-X = np.arange(0.25*np.pi, 1.75*np.pi, 0.25*np.pi)
-xx, yy = np.meshgrid(X, X)
-xy = np.c_[xx.reshape((-1, 1)), yy.reshape((-1, 1))]
+xy = np.random.uniform(-0.6, 1.0, size=(5, 2))
 zz = np.array([f(x) for x in xy])
 dzz = np.array([df(x) for x in xy])
 zz_ = np.r_[zz, dzz.reshape(-1)]
 
-gp = Gauss_Process_Regressor(kernel, 0, kernel_gd, kernel_hess)
+# Xt = np.linspace(0, 2*np.pi, 10)
+# xx_t, yy_t = np.meshgrid(Xt, Xt)
+# xy_t = np.c_[xx_t.reshape((-1, 1)), yy_t.reshape((-1, 1))]
+# zz_t = np.array([f(x) for x in xy_t])
+
+gp = Gauss_Process_Regressor(kernel, 1e-3, kernel_gd, kernel_hess)
 gp.fit(xy, zz_[:, np.newaxis])
 z_pred, z_pred_err = gp.predict(xy)
 
-import matplotlib.pyplot as plt 
-plt.plot(zz, z_pred, 'bo')
-plt.plot(zz, zz, 'r')
-plt.show()
+Kgd = kernel_gd(xy)
+Khess = kernel_hess(xy)
+K_star = np.c_[Kgd, Khess]
+predict_dy = (K_star @ gp.coef_).reshape((5, 2))
+
+err = np.sum((dzz.reshape((5, 2)) - predict_dy)**2, axis=1)
+print(err)
+# import matplotlib.pyplot as plt 
+# plt.plot(zz, z_pred, 'bo')
+# plt.plot(zz, zz, 'r')
+# plt.show()
