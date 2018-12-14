@@ -20,7 +20,7 @@ f1 = kernel(B1, A)
 gd = (kernel_gd(B, A)).reshape((5, 3, 10))
 f_gd = f0 + np.sum(gd*step[np.newaxis, :, np.newaxis], axis=1)
 err = abs(f_gd - f1)
-# print(err)
+print(err)
 
 A1 = A + step
 f1_ = kernel(B1, A1)

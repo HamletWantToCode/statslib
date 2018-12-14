@@ -2,9 +2,9 @@
 
 import numpy as np 
 from statslib.main.gauss_process import Gauss_Process_Regressor
-from statslib.tools.utils import rbfKernel, rbfKernel_gd, rbfKernel_hess
+from MLEK.tools.kernels import se_kernel, se_kernel_gd, se_kernel_hess 
 
-gamma = 1
+gamma = np.array([1])
 
 # def kernel(x, y=None):
 #     if y is None:
@@ -35,11 +35,11 @@ y = f(X)
 dy = df(X)
 y_ = np.r_[y, dy]
 
-kernel = rbfKernel(gamma)
-kernel_gd = rbfKernel_gd(gamma)
-kernel_hess = rbfKernel_hess(gamma)
+kernel = se_kernel(gamma)
+kernel_gd = se_kernel_gd(gamma)
+kernel_hess = se_kernel_hess(gamma)
 
-gp = Gauss_Process_Regressor(kernel, 1e-5, kernel_gd, kernel_hess)
+gp = Gauss_Process_Regressor(kernel, 1e-5, 1e-5, kernel_gd, kernel_hess)
 gp.fit(X[:, np.newaxis], y_[:, np.newaxis])
 
 Xt = np.linspace(0, 2*np.pi, 50)

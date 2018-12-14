@@ -90,7 +90,7 @@ def rbfKernel(gamma):
     def rbf_function(X, Y=None):
         X, Y = check_array(X, Y)
         square_distance = (euclidean_distance(X, Y))**2
-        return np.exp(-gamma*square_distance)
+        return np.exp(-square_distance)
     return rbf_function
 
 def rbfKernel_gd(gamma):
@@ -98,9 +98,9 @@ def rbfKernel_gd(gamma):
         X, Y = check_array(X, Y)
         (N1, D), N = X.shape, Y.shape[0]
         square_distance = (euclidean_distance(X, Y))**2
-        K = np.exp(-gamma*square_distance)
+        K = np.exp(-square_distance)
         diff = X[:, :, np.newaxis] - Y.T 
-        K_gd = -2*gamma*diff*K[:, np.newaxis, :]
+        K_gd = -2*diff*K[:, np.newaxis, :]*np.sqrt(gamma)
         return K_gd.reshape((N1*D, N))
     return rbf_gd
 
@@ -109,16 +109,16 @@ def rbfKernel_hess(gamma):
         X, Y = check_array(X, Y)
         (N1, D), N = X.shape, Y.shape[0]
         square_distance = (euclidean_distance(X, Y))**2
-        K = np.exp(-gamma*square_distance)
-        K_hess = np.zeros((N1*D, N*D), dtype=np.complex64)
-        E = np.eye(D, dtype=np.complex64)
+        K = np.exp(-square_distance)
+        K_hess = np.zeros((N1*D, N*D))
+        E = np.eye(D)
         for i in range(0, N1*D, D):
             m = i//D
             for j in range(0, N*D, D):
                 n = j//D
                 diff = X[m] - Y[n] 
-                K_hess[i:i+D, j:j+D] = (E - 2*gamma*diff[:, np.newaxis]*diff[np.newaxis, :])*K[m, n]
-        K_hess *= 2*gamma
+                K_hess[i:i+D, j:j+D] = (E - 2*np.sqrt(gamma)*diff[:, np.newaxis]*diff[np.newaxis, :])*K[m, n]
+        K_hess *= 2*np.sqrt(gamma)
         return K_hess
     return rbf_hess
 

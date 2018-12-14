@@ -2,12 +2,13 @@
 
 import numpy as np 
 from statslib.main.gauss_process import Gauss_Process_Regressor
-from statslib.tools.utils import rbfKernel, rbfKernel_gd, rbfKernel_hess
+# from statslib.tools.utils import rbfKernel, rbfKernel_gd, rbfKernel_hess
+from MLEK.tools.kernels import se_kernel, se_kernel_gd, se_kernel_hess
 
-gamma = 1
-kernel = rbfKernel(gamma)
-kernel_gd = rbfKernel_gd(gamma)
-kernel_hess = rbfKernel_hess(gamma)
+gamma = np.array([1.0, 1.0])
+kernel = se_kernel(gamma)
+kernel_gd = se_kernel_gd(gamma)
+kernel_hess = se_kernel_hess(gamma)
 
 def f(x):
     return (1-x[0])**2 + 100*(x[1]-x[0]**2)**2

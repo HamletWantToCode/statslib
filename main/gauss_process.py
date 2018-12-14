@@ -4,17 +4,19 @@ import numpy as np
 from statslib.tools.utils import svd_solver
 
 class Gauss_Process_Regressor(object):
-    def __init__(self, kernel, sigma, kernel_gd=None, kernel_hess=None):
+    def __init__(self, kernel, sigma1, sigma2, kernel_gd=None, kernel_hess=None):
         self.kernel = kernel
-        self.sigma_ = sigma
+        self.sigma1_ = sigma1
+        self.sigma2_ = sigma2
         self.kernel_gd = kernel_gd
         self.kernel_hess = kernel_hess
 
     def fit(self, X, y, cond=None):
         assert X.ndim==2 and y.ndim==2, print('dimension not match')
         self.X_fit_ = X
+        N, D = X.shape
         Cov = cov_setup(X, self.kernel, self.kernel_gd, self.kernel_hess)
-        A = Cov + (self.sigma_**2)*np.eye(Cov.shape[0])
+        A = Cov + np.diag(np.r_[np.ones(N)*self.sigma1_**2, np.ones(N*D)*self.sigma2_**2])
         self.coef_ = svd_solver(A, y, cond)
         return self
 
@@ -23,7 +25,8 @@ class Gauss_Process_Regressor(object):
         predict_y = K_star @ self.coef_
         K_predict = self.kernel(X, X)
         Cov = cov_setup(self.X_fit_, self.kernel, self.kernel_gd, self.kernel_hess)
-        A = Cov + (self.sigma_**2)*np.eye(Cov.shape[0])
+        N, D = self.X_fit_.shape
+        A = Cov + np.diag(np.r_[np.ones(N)*self.sigma1_**2, np.ones(N*D)*self.sigma2_**2])
         U, S, Vh = np.linalg.svd(A)
         rank = len(S)
         A_inv = (Vh[:rank].T).conj() @ np.diag(1./S) @ U[:, :rank].T
