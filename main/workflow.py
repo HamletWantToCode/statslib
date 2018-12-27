@@ -29,5 +29,6 @@ class Workflow(object):
         X_t = (X-self.mean_X) @ self.tr_mat_
         pred_y = self.model.predict(X_t)
         K_gd = self.kernel_gd(X_t, self.model.X_fit_)
-        pred_dy = (D_-1)*(K_gd @ self.model.coef_).reshape((n_, -1))
+        pred_dyt = (D_-1)*(K_gd @ self.model.coef_).reshape((n_, -1))
+        pred_dy = pred_dyt @ self.tr_mat_.T 
         return pred_y, pred_dy
