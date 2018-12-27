@@ -4,7 +4,10 @@ import numpy as np
 
 class Workflow(object):
     def __init__(self, n_components, gamma, lambda_, kernel, kernel_gd, model):
-        self.n_components_ = n_components
+        if isinstance(n_components, list):
+            self.n_cmps_ = n_components
+        else:
+            self.n_cmps_ = np.arange(0, n_components, 1, 'int')
         self.kernel = kernel(gamma)
         self.kernel_gd = kernel_gd(gamma)
         self.model = model(self.kernel, lambda_)
@@ -15,7 +18,7 @@ class Workflow(object):
         Cov = (X - mean_X).T @ (X - mean_X) / n_
         U, _, _ = np.linalg.svd(Cov)
         self.mean_X = mean_X
-        self.tr_mat_ = U[:, :self.n_components_]
+        self.tr_mat_ = U[:, self.n_cmps_]
         return self
 
     def fit(self, X, y, dy=None):
