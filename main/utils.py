@@ -7,7 +7,6 @@ def svd_inv(X):
         X_inv = X
     else:
         U, S, Vh = np.linalg.svd(X)
-        # n = len(S[S>1e-])
         X_inv = Vh.T.conj() @ np.diag(1./S) @ U.T.conj()
     return X_inv
 
@@ -60,13 +59,13 @@ def euclidean_distance(X, Y):
     distance = np.sum(D_*D_.conj(), axis=2, dtype=np.float64)
     return np.sqrt(distance)
 
-def manhattan_distance(X, Y):
-    # special care about complex entry
-    X_ = X[:, np.newaxis, :]
-    Y_ = Y[np.newaxis, :, :]
-    D_ = X_ - Y_
-    M = np.sum(np.sqrt(D_*D_.conj()), axis=2, dtype=np.float64)
-    return M
+# def manhattan_distance(X, Y):
+#     # special care about complex entry
+#     X_ = X[:, np.newaxis, :]
+#     Y_ = Y[np.newaxis, :, :]
+#     D_ = X_ - Y_
+#     M = np.sum(np.sqrt(D_*D_.conj()), axis=2, dtype=np.float64)
+#     return M
 
 # kernel
 def rbf_kernel(gamma, X, Y):
