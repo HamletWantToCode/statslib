@@ -1,28 +1,23 @@
-# test general covariance
+# test gauss process regressor in 1D
 
 import numpy as np 
-from statslib.main.gauss_process import Gauss_Process_Regressor
-from MLEK.tools.kernels import se_kernel, se_kernel_gd, se_kernel_hess 
 
-gamma = np.array([1])
+from statslib.main.gauss_process import GaussProcess 
+from statslib.main.utils import rbf_kernel, rbf_kernel_gradient, rbf_kernel_hessan
 
-# def kernel(x, y=None):
-#     if y is None:
-#         y = x
-#     dx = x - y.T
-#     return np.exp(-gamma*dx**2)
+gamma = 0.1
 
-# def kernel_gd(x, y=None):
-#     if y is None:
-#         y = x
-#     dx = x - y.T
-#     return -2*gamma*dx*np.exp(-gamma*dx**2)
+def kernel(gamma, x, y):
+    dx = x - y.T
+    return np.exp(-gamma*dx**2)
+
+def kernel_gd(gamma, x, y):
+    dx = x - y.T
+    return -2*gamma*dx*np.exp(-gamma*dx**2)
     
-# def kernel_hess(x, y=None):
-#     if y is None:
-#         y = x
-#     dx = x - y.T
-#     return 2*gamma*(1-2*gamma*dx**2)*np.exp(-gamma*dx**2) 
+def kernel_hess(gamma, x, y):
+    dx = x - y.T
+    return 2*gamma*(1-2*gamma*dx**2)*np.exp(-gamma*dx**2) 
 
 def f(x):
     return x*np.sin(x)
@@ -33,28 +28,25 @@ def df(x):
 X = np.arange(0.25*np.pi, 2*np.pi, 0.5*np.pi)
 y = f(X)
 dy = df(X)
-y_ = np.r_[y, dy]
+# dy = np.zeros(len(X))
 
-kernel = se_kernel(gamma)
-kernel_gd = se_kernel_gd(gamma)
-kernel_hess = se_kernel_hess(gamma)
-
-gp = Gauss_Process_Regressor(kernel, 1e-5, 1e-5, kernel_gd, kernel_hess)
-gp.fit(X[:, np.newaxis], y_[:, np.newaxis])
+gp = GaussProcess(gamma=gamma, kernel=rbf_kernel, gradient_on=True, kernel_gd=rbf_kernel_gradient, kernel_hess=rbf_kernel_hessan)
+gp.fit(X[:, np.newaxis], y, dy[:, np.newaxis])
 
 Xt = np.linspace(0, 2*np.pi, 50)
 yt = f(Xt)
-y_pred, y_error = gp.predict(Xt[:, np.newaxis])
-# dK = kernel_gd(Xt[:, np.newaxis], X[:, np.newaxis])
-# predict_dy = dK @ gp.coef_
-# ddK = kernel(X[:, np.newaxis]) 
-# ddK_predict = kernel_hess(Xt[:, np.newaxis], Xt[:, np.newaxis])
-# ddK_corr = kernel_gd(Xt[:, np.newaxis], X[:, np.newaxis])
-# predict_dy_error = np.diag(ddK_predict - ddK_corr @ np.linalg.pinv(ddK) @ ddK_corr.T)
+dyt = df(Xt)
+y_pred = gp.predict(Xt[:, np.newaxis])
+y_var = gp.predict_variance(Xt[:, np.newaxis])
+y_gd = gp.predict_gradient(Xt[:, np.newaxis])
 
 import matplotlib.pyplot as plt 
-plt.plot(X, y, 'ko')
-plt.plot(Xt, yt, 'r')
-plt.plot(Xt, y_pred, 'b', alpha=0.5)
-plt.fill_between(Xt, y_pred-y_error, y_pred+y_error, color='b', alpha=0.5)
+fig, (ax1, ax2) = plt.subplots(1, 2)
+ax1.plot(X, y, 'ko')
+ax1.plot(Xt, yt, 'r')
+ax1.plot(Xt, y_pred, 'b', alpha=0.5)
+ax1.fill_between(Xt, y_pred-y_var, y_pred+y_var, color='b', alpha=0.5)
+
+ax2.plot(Xt, dyt, 'r')
+ax2.plot(Xt, y_gd, 'b--', alpha=0.5)
 plt.show()

@@ -1,57 +1,143 @@
 # Gauss Process Regression
-
 import numpy as np 
-from statslib.tools.utils import svd_solver
+from sklearn.base import BaseEstimator, RegressorMixin
+from sklearn.utils import check_array, check_X_y
 
-class Gauss_Process_Regressor(object):
-    def __init__(self, kernel, sigma1, sigma2, kernel_gd=None, kernel_hess=None):
+from statslib.main.utils import svd_inv, rbf_kernel
+
+class GaussProcess(BaseEstimator, RegressorMixin):
+    """ 
+    Parameters
+    ----------
+    sigma:
+    gamma:
+    kernel:
+    gradient_on:
+    kernel_gd:
+    kernel_hess:
+
+    Attributes
+    ----------
+    X_fit_ : ndarray, shape (n_samples, n_features)
+        The input passed during :meth:`fit`.
+    y_fit_ : ndarray, shape (n_samples,)
+        The labels passed during :meth:`fit`.
+    dy_fit_ : ndarray, shape (n_classes,)
+    """
+    def __init__(self, sigma=1e-5, gamma=1e-3, kernel=rbf_kernel, gradient_on=False, kernel_gd=None, kernel_hess=None):
+        self.sigma = sigma
+        self.gamma = gamma
         self.kernel = kernel
-        self.sigma1_ = sigma1
-        self.sigma2_ = sigma2
+        self.gradient_on = gradient_on
         self.kernel_gd = kernel_gd
         self.kernel_hess = kernel_hess
 
-    def fit(self, X, y, cond=None):
-        assert X.ndim==2 and y.ndim==2, print('dimension not match')
+    def fit(self, X, y, dy=None):
+        """
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_features)
+            The training input samples.
+        y : array-like, shape (n_samples,)
+            The target values. An array of int.
+        dy: array-like, shape (n_samples, n_features)
+
+        Returns
+        -------
+        self : object
+            Returns self.
+        """
+        X, y= check_X_y(X, y)
+        if dy is None:
+            dy = np.zeros_like(X)
+        dy = check_array(dy)
+        assert dy.shape[0] == X.shape[0], print('dimension of dy and X mismatch !')
+        N_tr, D = X.shape
+        dy = np.ravel(dy)
         self.X_fit_ = X
-        N, D = X.shape
-        Cov = cov_setup(X, self.kernel, self.kernel_gd, self.kernel_hess)
-        A = Cov + np.diag(np.r_[np.ones(N)*self.sigma1_**2, np.ones(N*D)*self.sigma2_**2])
-        self.coef_ = svd_solver(A, y, cond)
+        self.y_fit_ = y
+        self.dy_fit_ = dy
+
+        A = self.kernel(self.gamma, X, X) + (self.sigma**2)*np.eye(N_tr)
+        if self.gradient_on:
+            C = self.kernel_gd(self.gamma, X, X).reshape((N_tr*D, N_tr))
+            B = C.T
+            D = self.kernel_hess(self.gamma, X, X) + (self.sigma**2)*np.eye(N_tr*D)
+        else:
+            B = np.zeros((N_tr, N_tr*D))
+            C = B.T
+            D = np.zeros((N_tr*D, N_tr*D))
+        D_inv = svd_inv(D)
+        self.ul_block_ = svd_inv((A - B @ D_inv @ C))
+        self.ur_block_ = -self.ul_block_ @ B @ D_inv
+        self.bl_block_ = -D_inv @ C @ self.ul_block_
+        self.br_block_ = D_inv + D_inv @ C @ self.ul_block_ @ B @ D_inv
         return self
 
     def predict(self, X):
-        K_star = kstar_setup(X, self.X_fit_, self.kernel, self.kernel_gd)
-        predict_y = K_star @ self.coef_
-        K_predict = self.kernel(X, X)
-        Cov = cov_setup(self.X_fit_, self.kernel, self.kernel_gd, self.kernel_hess)
-        N, D = self.X_fit_.shape
-        A = Cov + np.diag(np.r_[np.ones(N)*self.sigma1_**2, np.ones(N*D)*self.sigma2_**2])
-        U, S, Vh = np.linalg.svd(A)
-        rank = len(S)
-        A_inv = (Vh[:rank].T).conj() @ np.diag(1./S) @ U[:, :rank].T
-        Err = K_predict - K_star @ A_inv @ K_star.T
-        np.maximum(0, Err, out=Err)
-        return predict_y, np.sqrt(np.diag(Err))
+        """
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_features)
+            The input samples.
 
-def cov_setup(X, func, dfunc=None, ddfunc=None):
-    K = func(X)
-    if (dfunc is not None) & (ddfunc is not None):
-        K_gd = dfunc(X)
-        K_hess = ddfunc(X)
-        tmp1, tmp2 = np.r_[K, K_gd], np.r_[K_gd.T, K_hess]
-        G = np.c_[tmp1, tmp2]
-        return G
-    else:
-        return K
+        Returns
+        -------
+        y : ndarray, shape (n_samples,)
+        """
+        X = check_array(X)
+        N_ts = X.shape[0]
+        N_tr, D = self.X_fit_.shape
+        A = self.kernel(self.gamma, X, self.X_fit_)
+        if self.gradient_on:
+            B = self.kernel_gd(self.gamma, self.X_fit_, X).reshape((N_tr*D, N_ts)).T
+        else:
+            B = np.zeros((N_ts, N_tr*D))
+        pred_y = A @ (self.ul_block_ @ self.y_fit_ + self.ur_block_ @ self.dy_fit_) + B @ (self.bl_block_ @ self.y_fit_ + self.br_block_ @ self.dy_fit_)
+        return pred_y
 
-def kstar_setup(X, Y, func, dfunc=None):
-    (N1, D), N = X.shape, Y.shape[0]
-    Kstar = func(X, Y)
-    if dfunc is not None:
-        Kstar_gd = dfunc(Y, X).T
-        Gstar = np.c_[Kstar, Kstar_gd]
-        return Gstar
-    else:
-        return Kstar
+    def predict_gradient(self, X):
+        """
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_features)
+            The input samples.
+
+        Returns
+        -------
+        dy : ndarray, shape (n_samples, n_features)
+        """
+        X = check_array(X)
+        N_ts, D = X.shape
+        N_tr = self.X_fit_.shape[0]
+        A = self.kernel_gd(self.gamma, X, self.X_fit_).reshape((N_ts, N_tr*D))
+        if self.gradient_on:
+            B = self.kernel_hess(self.gamma, X, self.X_fit_)
+        else:
+            B = np.zeros((N_ts*D, N_tr*D))
+        pred_dy = A @ (self.ul_block_ @ self.y_fit_ + self.ur_block_ @ self.dy_fit_) + B @ (self.bl_block_ @ self.y_fit_ + self.br_block_ @ self.dy_fit_)
+        return pred_dy.reshape((N_ts, D))
+
+    def predict_variance(self, X):
+        """
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_features)
+            The input samples.
+
+        Returns
+        -------
+        var : ndarray, shape (n_samples,)
+        """
+        X = check_array(X)
+        N_ts, D = X.shape
+        N_tr = self.X_fit_.shape[0]
+        K = self.kernel(self.gamma, X, X)
+        A = self.kernel(self.gamma, X, self.X_fit_)
+        if self.gradient_on:
+            B = self.kernel_gd(self.gamma, self.X_fit_, X).reshape((N_tr*D, N_ts)).T
+        else:
+            B = np.zeros((N_ts, N_tr*D))
+        covariance = K - (A @ (self.ul_block_ @ A.T + self.ur_block_ @ B.T) + B @ (self.bl_block_ @ A.T +self.br_block_ @ B.T))
+        return np.sqrt(np.diag(covariance))
 
