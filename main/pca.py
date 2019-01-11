@@ -64,6 +64,14 @@ class PrincipalComponentAnalysis(BaseEstimator, TransformerMixin):
         tr_X = (X - self.mean_) @ self.tr_mat_
         return tr_X
 
+    def transform_gradient(self, dy):
+        dy = check_array(dy)
+        if dy.shape[1] != self.n_features_:
+                raise ValueError('Shape of input is different from what was seen'
+                                'in `fit`') 
+        tr_dy = dy @ self.tr_mat_
+        return tr_dy
+
     def fit_transform(self, X, y=None):
         self.fit(X, y)
         return self.transform(X)

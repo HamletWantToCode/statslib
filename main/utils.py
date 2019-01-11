@@ -93,4 +93,3 @@ def rbf_kernel_hessan(gamma, X, Y):
             K_hess[i:i+D, j:j+D] = (E - 2*gamma*diff[:, np.newaxis]*diff[np.newaxis, :])*K[m, n]
     K_hess *= 2*gamma
     return K_hess
-

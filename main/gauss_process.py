@@ -24,7 +24,7 @@ class GaussProcess(BaseEstimator, RegressorMixin):
         The labels passed during :meth:`fit`.
     dy_fit_ : ndarray, shape (n_classes,)
     """
-    def __init__(self, sigma=1e-5, gamma=1e-3, kernel=rbf_kernel, gradient_on=False, kernel_gd=None, kernel_hess=None):
+    def __init__(self, sigma=1e-5, gamma=1e-3, kernel=rbf_kernel, kernel_gd=None, gradient_on=False, kernel_hess=None):
         self.sigma = sigma
         self.gamma = gamma
         self.kernel = kernel
@@ -110,7 +110,7 @@ class GaussProcess(BaseEstimator, RegressorMixin):
         X = check_array(X)
         N_ts, D = X.shape
         N_tr = self.X_fit_.shape[0]
-        A = self.kernel_gd(self.gamma, X, self.X_fit_).reshape((N_ts, N_tr*D))
+        A = self.kernel_gd(self.gamma, X, self.X_fit_).reshape((N_ts*D, N_tr))
         if self.gradient_on:
             B = self.kernel_hess(self.gamma, X, self.X_fit_)
         else:
