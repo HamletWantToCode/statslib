@@ -387,8 +387,6 @@ def _fit_and_score(estimator, X, y, dy, scorer, train, test, verbose,
             estimator.fit(X_train, **fit_params)
         else:
             estimator.fit(X_train, y_train, dy_train, **fit_params)
-            _tr_mat = estimator.steps[0][-1].tr_mat_
-            project_dy_test = dy_test @ _tr_mat @ _tr_mat.T
 
     except Exception as e:
         # Note fit time as time until error
@@ -428,7 +426,7 @@ def _fit_and_score(estimator, X, y, dy, scorer, train, test, verbose,
     else:
         fit_time = time.time() - start_time
         # _score will return dict if is_multimetric is True
-        test_scores = _score(estimator, X_test, y_test, project_dy_test, scorer, is_multimetric)
+        test_scores = _score(estimator, X_test, y_test, dy_test, scorer, is_multimetric)
         score_time = time.time() - start_time - fit_time
         if return_train_score:
             train_scores = _score(estimator, X_train, y_train, dy_train, scorer,

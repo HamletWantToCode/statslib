@@ -18,7 +18,7 @@ class MyPipe(Pipeline):
                 Xt = transform.transform(Xt)
         dyt_predict = self.steps[-1][-1].predict_gradient(Xt, **predict_params)
         # !!! for real space grid, we have to multiply the grid number
-        return (X.shape[1]-1)*dyt_predict @ self.steps[0][-1].tr_mat_.T 
+        return (X.shape[1]-1)*dyt_predict 
 
     def _fit(self, X, y=None, dy=None, **fit_params):
         # shallow copy of steps - this should really be steps_

@@ -72,6 +72,14 @@ class PrincipalComponentAnalysis(BaseEstimator, TransformerMixin):
         tr_dy = dy @ self.tr_mat_
         return tr_dy
 
+    def inverse_transform(self, Xt):
+        X = Xt @ self.tr_mat_.T + self.mean_
+        return X
+
+    def inverse_transform_gradient(self, dyt):
+        dy = dyt @ self.tr_mat_.T 
+        return dy
+
     def fit_transform(self, X, y=None):
         self.fit(X, y)
         return self.transform(X)

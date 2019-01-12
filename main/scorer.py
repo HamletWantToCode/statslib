@@ -1,7 +1,6 @@
 # metric that accomodate the gradient estimation
 import numpy as np 
 from sklearn.metrics.scorer import _BaseScorer
-from sklearn.metrics import mean_squared_error
 
 class _PredictScorer(_BaseScorer):
     def __call__(self, estimator, X, y_true, dy_true, sample_weight=None):
@@ -23,7 +22,8 @@ class _PredictScorer(_BaseScorer):
             Score function applied to prediction of estimator on X.
         """
         y_pred = estimator.predict(X)
-        dy_pred = estimator.predict_gradient(X)
+        dyt_pred = estimator.predict_gradient(X)
+        dy_pred = estimator.inverse_transform_gradient(dyt_pred)
         if sample_weight is not None:
             return self._sign * self._score_func(y_true, y_pred,
                                                  sample_weight=sample_weight,
